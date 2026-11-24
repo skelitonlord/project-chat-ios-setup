@@ -6,6 +6,7 @@ const download = element("download");
 const retry = element("retry");
 const fallback = element("fallback");
 const fragment = location.hash;
+const android = fragment.startsWith("#pc-android-v1=");
 if (fragment) history.replaceState(null, "", location.pathname);
 
 function control() {
@@ -64,22 +65,51 @@ async function prepare() {
 }
 
 download.addEventListener("click", () => {
+  if (android) {
+    status.textContent = "Check Downloads for the certificate, then install it manually in Android Settings.";
+    fallback.hidden = false;
+    return;
+  }
   status.textContent = "If Safari asks to download a configuration profile, choose Allow. Then open Settings.";
   retry.hidden = false;
   fallback.hidden = false;
 });
 retry.addEventListener("click", prepare);
 
+function androidDownload(certificate) {
+  const bytes = Uint8Array.from(atob(certificate.base64), (char) => char.charCodeAt(0));
+  const objectUrl = URL.createObjectURL(new Blob([bytes], {type: "application/pkix-cert"}));
+  download.href = objectUrl;
+  download.download = "project-chat-companion-ca.cer";
+  download.textContent = "Download CA certificate";
+  const matches = element("fingerprint-matches");
+  matches.checked = false;
+  element("android-verify").hidden = false;
+  element("android-steps").hidden = false;
+  matches.addEventListener("change", () => { download.hidden = !matches.checked; });
+  addEventListener("pagehide", (event) => { if (!event.persisted) URL.revokeObjectURL(objectUrl); }, {once: true});
+  status.textContent = "Certificate ready. Compare the fingerprint with Ubuntu before downloading.";
+}
+
 (async () => {
   if (!fragment) {
-    status.textContent = "Scan the iPhone/iPad setup QR from Project Chat on Ubuntu.";
+    status.textContent = "Scan the iPhone/iPad or Android setup QR from Project Chat on Ubuntu.";
     return;
   }
   try {
-    const certificate = await ProjectChatProfile.validate(fragment);
+    const certificate = await ProjectChatProfile.validate(fragment, android ? "android" : "iphone");
     element("fingerprint").textContent = certificate.fingerprint;
     element("details").hidden = false;
-    await prepare();
+    if (android) {
+      element("purpose").textContent = "Download the public CA certificate for your private Ubuntu companion.";
+      fallback.textContent = "If the download is unavailable, use Export CA certificate in Project Chat on Ubuntu.";
+      androidDownload(certificate);
+    } else {
+      element("purpose").textContent = "Prepare the iPhone or iPad profile for your private Ubuntu companion.";
+      element("apple-steps").hidden = false;
+      fallback.textContent = "If Safari does not show Profile Downloaded, use Export iPhone profile in Project Chat on Ubuntu.";
+      await prepare();
+    }
   } catch {
     status.textContent = "This setup QR is invalid, expired, or from an unsupported version. Scan a fresh setup QR from Ubuntu.";
     fallback.hidden = false;

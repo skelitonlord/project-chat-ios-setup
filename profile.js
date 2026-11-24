@@ -9,8 +9,9 @@ globalThis.ProjectChatProfile = (() => {
     return btoa(String.fromCharCode(...bytes));
   }
 
-  function decodeFragment(fragment) {
-    const payload = fragment.startsWith("#pc-v1=") ? fragment.slice(7) : "";
+  function decodeFragment(fragment, platform) {
+    const prefix = platform === "android" ? "#pc-android-v1=" : "#pc-v1=";
+    const payload = fragment.startsWith(prefix) ? fragment.slice(prefix.length) : "";
     if (payload.length < 342 || payload.length > 683 || alpha.test(payload)) throw new Error("Invalid profile QR.");
     const bytes = Uint8Array.from(atob(payload.replaceAll("-", "+").replaceAll("_", "/")), (char) => char.charCodeAt(0));
     const canonical = encode64(bytes).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
@@ -147,8 +148,9 @@ globalThis.ProjectChatProfile = (() => {
     return fixed;
   }
 
-  async function validate(fragment) {
-    const bytes = decodeFragment(fragment);
+  async function validate(fragment, platform = "iphone") {
+    if (platform !== "iphone" && platform !== "android") throw new Error("Unsupported setup QR.");
+    const bytes = decodeFragment(fragment, platform);
     const root = node(bytes, 0, bytes.length);
     const outer = children(bytes, root, 0x30);
     if (root.end !== bytes.length || outer.length !== 3) throw new Error("Invalid certificate.");

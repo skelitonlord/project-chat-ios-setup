@@ -1,0 +1,12 @@
+:root { color-scheme:dark; font:16px/1.55 system-ui,sans-serif; color:#e8f6ef; background:#0c211b }
+* { box-sizing:border-box }
+[hidden] { display:none!important }
+body { margin:0; padding:clamp(16px,5vw,36px); min-height:100dvh }
+main { max-width:610px; margin:4vh auto 0; padding:clamp(16px,5vw,32px); background:#15382d; border:1px solid #75c9a858; border-radius:16px }
+h1 { margin:0; font-size:clamp(25px,6vw,34px); line-height:1.2 }
+p,ol { margin:12px 0 }
+li+li { margin-top:12px }
+code { display:block; padding:10px; margin:10px 0; background:#102a22; border-radius:8px; color:#9cede0; overflow-wrap:anywhere }
+.button,button { display:inline-block; min-height:44px; margin:8px 4px 0 0; padding:10px 14px; border:1px solid #8ae8ba; border-radius:8px; background:#97edc6; color:#09251b; font:inherit; font-weight:700; text-decoration:none }
+a:focus-visible,button:focus-visible { outline:2px solid #e8f6ef; outline-offset:3px }
+#status { color:#bcebd8 }
